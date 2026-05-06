@@ -2,12 +2,10 @@ const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 export default async function handler(req, res) {
-    // Only allow POST
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed" });
     }
 
-    // CORS — allows your Chrome extension to call this
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -23,6 +21,12 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Server misconfiguration. API key not set." });
     }
 
+    // Trim content to reduce input token usage
+    const trimmedContent = {
+        title: content.title,
+        content: content.content.slice(0, 6000)
+    };
+
     const prompt =
         mode === "brief"
             ? `Summarize this webpage in exactly 3 bullet points. Each bullet must be one sentence only, maximum 20 words. No intro, no outro, just the 3 bullets.
@@ -32,8 +36,8 @@ Format exactly like this:
 - Second key point here
 - Third key point here
 
-Title: ${content.title}
-Content: ${content.content}`
+Title: ${trimmedContent.title}
+Content: ${trimmedContent.content}`
 
             : `Analyze this webpage and respond in this exact structure. Keep each section tight and concise.
 
@@ -49,8 +53,8 @@ Write 2-3 sentences max. Plain prose, no bullets.
 **Estimated Reading Time**
 X min read
 
-Title: ${content.title}
-Content: ${content.content}`;
+Title: ${trimmedContent.title}
+Content: ${trimmedContent.content}`;
 
     try {
         const geminiResponse = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
@@ -60,7 +64,8 @@ Content: ${content.content}`;
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
                     temperature: 0.3,
-                maxOutputTokens: mode === "brief" ? 300 : 2048                }
+                    maxOutputTokens: mode === "brief" ? 300 : 2048
+                }
             })
         });
 
