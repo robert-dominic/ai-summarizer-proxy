@@ -60,8 +60,7 @@ Content: ${content.content}`;
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
                     temperature: 0.3,
-                    maxOutputTokens: mode === "brief" ? 120 : 2048
-                }
+                maxOutputTokens: mode === "brief" ? 300 : 2048                }
             })
         });
 
